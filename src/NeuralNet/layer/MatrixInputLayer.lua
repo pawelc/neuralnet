@@ -16,13 +16,14 @@ function MatrixInputLayer:initialise()
   if(self.next == nil) then
     error("Inout layer at level ".. self.level .." has to have output layer")
   end
+  self.output=torch.Tensor(self.size+1):zero()
+  self.output[self.output:size(1)] = 1 
 end
 
 --Input layer only forward signal to the first hiddent layer
 function MatrixInputLayer:forward(signal)
   self.input = signal
-  self.output = signal:resize(signal:size(1)+1)
-  self.output[self.output:size(1)] = 1 
+  self.output:narrow(1,1,self.size):copy(self.input)
   self.next:forward(self.output)
 end
 

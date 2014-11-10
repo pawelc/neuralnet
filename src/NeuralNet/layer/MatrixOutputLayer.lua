@@ -33,12 +33,13 @@ end
 --Perform backward pass through the output layer
 function MatrixOutputLayer:backwards()
   self.localGradient=t.cmul(self.error,self.actFun.funD(self.output))
+  self.minusGradientErrorWrtWeight=torch.Tensor(self.size, self.prev.output:size(1)):zero():addr(self.localGradient,self.prev.output)
   self.prev:backwards()
 end
 
 --adjusting weights
-function MatrixOutputLayer:adjustWeights()
-  self.deltaWeights = self.deltaWeights * self.momemtumConstant + torch.Tensor(self.localGradient:size(1), self.prev.output:size(1)):zero():addr(self.localGradient,self.prev.output) *self.learningRate
+function MatrixOutputLayer:adjustWeights()  
+  self.deltaWeights = self.deltaWeights * self.momemtumConstant + self.minusGradientErrorWrtWeight * self.learningRate
   self.weights = self.weights + self.deltaWeights
 end
 

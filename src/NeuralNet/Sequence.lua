@@ -46,9 +46,13 @@ end
 --Perform backward pass through the network
 function Sequence:backwards()
   --starting from the output layer
-  self.layers[#self.layers]:backwards()
+  self.layers[#self.layers]:backwards()  
+end
+
+--Perform adjustment of weights
+function Sequence:adjustWeights()
   --now recompute weights of all layers
-  self.layers[1]:adjustWeights()
+  self.layers[1]:adjustWeights()  
 end
 
 --Returns last computed result from the network after forwarding signal through it

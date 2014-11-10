@@ -37,12 +37,13 @@ function MatrixHiddenLayer:backwards()
   --because output had attached 1 at the end have to remove the last element
   --alse the weight in the next layer contain bias in the last column so aso have to narrow to this region of the matrix
   self.localGradient=t.cmul(self.actFun.funD(self.output:narrow(1,1,self.output:size(1)-1)), self.next.weights:narrow(2,1,self.next.weights:size(2)-1):transpose(1,2)*self.next.localGradient)
+  self.minusGradientErrorWrtWeight=torch.Tensor(self.localGradient:size(1), self.prev.output:size(1)):zero():addr(self.localGradient,self.prev.output)
   self.prev:backwards()
 end
 
 --adjusting weights
-function MatrixHiddenLayer:adjustWeights()
-  self.deltaWeights = self.deltaWeights * self.momemtumConstant + torch.Tensor(self.localGradient:size(1), self.prev.output:size(1)):zero():addr(self.localGradient,self.prev.output) *self.learningRate
+function MatrixHiddenLayer:adjustWeights()   
+  self.deltaWeights = self.deltaWeights * self.momemtumConstant + self.minusGradientErrorWrtWeight*self.learningRate
   self.weights = self.weights + self.deltaWeights
   self.next:adjustWeights()  
 end
