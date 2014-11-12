@@ -81,12 +81,12 @@ end
 
 function Learner.rmse(seq,inputSignal,targetSignal)
   local dataSize=inputSignal:size(1)  
-  local rmse = 0
+  local rmsev = 0
   for i = 1,dataSize do
     seq:forward(inputSignal[{i,{}}],targetSignal[{{i}}])  
-    rmse = rmse+seq:error()*seq:error()                 
+    rmsev = seq:error()*seq:error()+rmsev                 
   end
-  return torch.sqrt(rmse/dataSize)
+  return torch.sqrt(rmsev/dataSize)
 end
 
 return Learner
