@@ -1,4 +1,5 @@
 require("torch")
+local TableUtils = require 'NeuralNet.utils.TableUtils'
 
 local Learner={
   shouldCheckGradient=false,
@@ -8,25 +9,12 @@ local Learner={
   compareGradientEps=1e-3
 }
 
---MatrixLayer is the layer of matrix network implemented with matrices
-
---data should be in 3-D tensor when 1st dim is example index, 2nd dim has two choices: 
---1 for data and 2 for expected signal, the 3rd dim is the data belonging to input or expected output
-function Learner.stopAfterNEpochsLearner(seq,nEpochs,inputSignal,targetSignal)  
-  local dataSize=inputSignal:size(1)
-  for e = 1,nEpochs do
-    local rowPermutation = torch.randperm(dataSize)
-    for i = 1,dataSize do
-      local row=rowPermutation[i]
-      local input=inputSignal[{row,{}}]
-      local target=targetSignal[{{row}}]
-      seq:forward(input,target)  
-      seq:backwards()
-      Learner.checkGradient(seq,input,target) 
-      seq:adjustWeights()                 
-    end
---    print(rmse(seq,inputSignal,targetSignal)) 
-  end
+--Create the input MatrixLayer of given size, only invoked by concreate layer type
+function Learner:__new (o)
+  o = o or {}
+  setmetatable(o, self)
+  self.__index = self
+  return o
 end
 
 --Checks error gradient wrt weights numerically if it was properly computed by back prop.
@@ -87,6 +75,63 @@ function Learner.rmse(seq,inputSignal,targetSignal)
     rmsev = seq:error()*seq:error()+rmsev                 
   end
   return torch.sqrt(rmsev/dataSize)
+end
+
+--performs training and compute validation error over folds cross validation for different hyperparameters
+function Learner.crossValidate(model,trainAndValidationDataSetup,folds,learner)
+  local avgRmse = 0
+  for _,trainValidData in ipairs(trainAndValidationDataSetup) do 
+    learner:learn(model,trainValidData.train[{{},{1,trainValidData.train:size(2)-1}}],trainValidData.train[{{},trainValidData.train:size(2)}])
+    avgRmse = avgRmse + Learner.rmse(model,trainValidData.valid[{{},{1,trainValidData.valid:size(2)-1}}],trainValidData.valid[{{},trainValidData.valid:size(2)}])
+  end
+  avgRmse=avgRmse/folds  
+  return avgRmse
+end
+
+--performs grid search on different configuration of hyper parameters deffined.
+-- params - table with list per parameter
+-- buildModelFun - function buildnig model for one conbination of hyper parameters 
+-- dataSetup - data split for cross validation folds and test data
+function Learner.hyperGridSearch(opts)
+  local params=opts.params
+  local buildModelFun=opts.buildModelFun
+  local dataSetup=opts.dataSetup
+  local nFolds=opts.nFolds
+  local nFolds=opts.nFolds
+  local learner=opts.learner
+  
+  local paramsNames={}
+  local i = 1
+  for paramName,_ in pairs(params) do
+    paramsNames[i]=paramName
+    i=i+1
+  end
+  local bestModel=nil
+  
+  function hyperGridSearch(flattened,params,idx)
+    if(idx <= #paramsNames) then
+      local paramList = params[paramsNames[idx]]    
+      for _,v in pairs(paramList) do
+        flattened[paramsNames[idx]]=v
+        hyperGridSearch(flattened,params,idx+1) 
+      end
+    else
+      local rmse=Learner.crossValidate(buildModelFun(flattened),dataSetup.trainAndValidationDataSetup, nFolds,learner)
+      logger:info(string.format("For params: %s average validation RMSE is %f",TableUtils.tostring(flattened),rmse))
+      if bestModel == nil or bestModel.perf.validRmse > rmse then
+        bestModel = {params=TableUtils.shallowCopy(flattened)}
+        bestModel.perf = {validRmse=rmse}
+      end  
+     
+    end
+  end  
+  hyperGridSearch({},params,1)  
+  
+  --using selected hyper parameters train model on train and validation data and compute error on test data to get genralization performance
+  local seq=buildModelFun(bestModel.params)
+  learner.learn(seq,dataSetup.trainAndValidationData[{{},{1,dataSetup.trainAndValidationData:size(2)-1}}],dataSetup.trainAndValidationData[{{},dataSetup.trainAndValidationData:size(2)}])
+  bestModel.perf.testRmse = learner.rmse(seq,dataSetup.testData[{{},{1,dataSetup.testData:size(2)-1}}],dataSetup.testData[{{},dataSetup.testData:size(2)}])  
+  return bestModel
 end
 
 return Learner

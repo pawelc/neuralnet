@@ -9,7 +9,8 @@ local output = require 'NeuralNet.layer.MatrixOutputLayer'
 local act = require 'NeuralNet.Activation'
 local err = require 'NeuralNet.Error'
 local weighGen = require 'NeuralNet.WeightGen'
-local learner = require 'NeuralNet.learner.Learner'
+local StopAfterNEpochsLearner = require 'NeuralNet.learner.StopAfterNEpochsLearner'
+local Learner = require 'NeuralNet.learner.Learner'
 local t = require 'torch'
 
 local function main()
@@ -51,17 +52,15 @@ local function main()
   -1
   })
   
-  print(string.format("Before learning RMSE: %f",learner.rmse(seq,inputSignal,targetSignal)))
+  print(string.format("Before learning RMSE: %f",Learner.rmse(seq,inputSignal,targetSignal)))
   
-  --we can check gradient numerically to debug implementation
-  learner.shouldCheckGradient=false
   --stop after n epochs
   local nEpochs=1000
   print(string.format("Running learner %d epochs",nEpochs))
-  learner.stopAfterNEpochsLearner(seq,nEpochs,inputSignal,targetSignal)
+  StopAfterNEpochsLearner:new{nEpochs=nEpochs,shouldCheckGradient=false}:learn(seq,inputSignal,targetSignal)
   
   --check how we did with learning
-  print(string.format("After learning RMSE: %f",learner.rmse(seq,inputSignal,targetSignal)))  
+  print(string.format("After learning RMSE: %f",Learner.rmse(seq,inputSignal,targetSignal)))  
   print(string.format("Trained answer for input: -1,1 is %s",seq:forward(t.Tensor({-1,1}),t.Tensor({1}))))
   print(string.format("Trained answer for input: 1,-1 is %s",seq:forward(t.Tensor({1,-1}),t.Tensor({1}))))
   print(string.format("Trained answer for input: -1,-1 is %s",seq:forward(t.Tensor({-1,-1}),t.Tensor({-1}))))
