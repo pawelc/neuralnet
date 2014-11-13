@@ -77,6 +77,30 @@ function Learner.rmse(seq,inputSignal,targetSignal)
   return torch.sqrt(rmsev/dataSize)
 end
 
+--create function computing learning rate that changes exponentially for each epoch
+function Learner:expLearningRate(initialLearningRate,expDecayConst)
+  self.learningRateFun=function()
+    return initialLearningRate*torch.exp(expDecayConst*(self.epoch-1))
+  end  
+  return self
+end
+
+--create function computing learning rate the is constant for each epoch
+function Learner:constLearningRate(learningRate)
+  self.learningRateFun = function()
+    return learningRate
+  end  
+  return self
+end
+
+--create function computing momentum rate the is constant for each epoch
+function Learner:constMomentum(momentum)
+  self.momentumFun = function()
+    return momentum
+  end  
+  return self
+end
+
 --performs training and compute validation error over folds cross validation for different hyperparameters
 function Learner.crossValidate(model,trainAndValidationDataSetup,folds,learner)
   local avgRmse = 0
@@ -129,7 +153,7 @@ function Learner.hyperGridSearch(opts)
   
   --using selected hyper parameters train model on train and validation data and compute error on test data to get genralization performance
   local seq=buildModelFun(bestModel.params)
-  learner.learn(seq,dataSetup.trainAndValidationData[{{},{1,dataSetup.trainAndValidationData:size(2)-1}}],dataSetup.trainAndValidationData[{{},dataSetup.trainAndValidationData:size(2)}])
+  learner:learn(seq,dataSetup.trainAndValidationData[{{},{1,dataSetup.trainAndValidationData:size(2)-1}}],dataSetup.trainAndValidationData[{{},dataSetup.trainAndValidationData:size(2)}])
   bestModel.perf.testRmse = learner.rmse(seq,dataSetup.testData[{{},{1,dataSetup.testData:size(2)-1}}],dataSetup.testData[{{},dataSetup.testData:size(2)}])  
   return bestModel
 end

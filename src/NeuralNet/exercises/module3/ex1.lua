@@ -12,6 +12,13 @@ local weighGen = require 'NeuralNet.WeightGen'
 local StopAfterNEpochsLearner = require 'NeuralNet.learner.StopAfterNEpochsLearner'
 local Learner = require 'NeuralNet.learner.Learner'
 local t = require 'torch'
+require "logging"
+
+logger = logging.new(function(self, level, message)
+                             print(level, " "..message)
+                             return true
+                           end)
+logger:setLevel (logging.INFO)
 
 local function main()
   --setting seed so the experiment can be repeted
@@ -30,10 +37,7 @@ local function main()
                   actFun(act.tanhAct):
                   errFun(err.simple):
                   weightGenFun(weighGen.uniformAroundZero))
-  --training without momentum                  
-  seq:momemtumConstant(0)
-  --learning rate
-  seq:learningRate(0.1)   
+  
   --initialize neural net             
   seq:initialise()  
   
@@ -52,22 +56,28 @@ local function main()
   -1
   })
   
-  print(string.format("Before learning RMSE: %f",Learner.rmse(seq,inputSignal,targetSignal)))
+  logger:info(string.format("Before learning RMSE: %f",Learner.rmse(seq,inputSignal,targetSignal)))
   
   --stop after n epochs
   local nEpochs=1000
-  print(string.format("Running learner %d epochs",nEpochs))
-  StopAfterNEpochsLearner:new{nEpochs=nEpochs,shouldCheckGradient=false}:learn(seq,inputSignal,targetSignal)
+  logger:info(string.format("Running learner %d epochs",nEpochs))
+  
+  StopAfterNEpochsLearner:new{
+    nEpochs=nEpochs,
+    shouldCheckGradient=false}
+      :constLearningRate(0.1)
+      :constMomentum(0)
+      :learn(seq,inputSignal,targetSignal)
   
   --check how we did with learning
-  print(string.format("After learning RMSE: %f",Learner.rmse(seq,inputSignal,targetSignal)))  
-  print(string.format("Trained answer for input: -1,1 is %s",seq:forward(t.Tensor({-1,1}),t.Tensor({1}))))
-  print(string.format("Trained answer for input: 1,-1 is %s",seq:forward(t.Tensor({1,-1}),t.Tensor({1}))))
-  print(string.format("Trained answer for input: -1,-1 is %s",seq:forward(t.Tensor({-1,-1}),t.Tensor({-1}))))
-  print(string.format("Trained answer for input: 1,1 is %s",seq:forward(t.Tensor({1,1}),t.Tensor({-1}))))
+  logger:info(string.format("After learning RMSE: %f",Learner.rmse(seq,inputSignal,targetSignal)))  
+  logger:info(string.format("Trained answer for input: -1,1 is %s",seq:forward(t.Tensor({-1,1}),t.Tensor({1}))))
+  logger:info(string.format("Trained answer for input: 1,-1 is %s",seq:forward(t.Tensor({1,-1}),t.Tensor({1}))))
+  logger:info(string.format("Trained answer for input: -1,-1 is %s",seq:forward(t.Tensor({-1,-1}),t.Tensor({-1}))))
+  logger:info(string.format("Trained answer for input: 1,1 is %s",seq:forward(t.Tensor({1,1}),t.Tensor({-1}))))
   
-  print(string.format("Weights in the first hidden layer:\n%s",seq.layers[2].weights))
-  print(string.format("Weights in the output layer:\n%s",seq.layers[3].weights))
+  logger:info(string.format("Weights in the first hidden layer:\n%s",seq.layers[2].weights))
+  logger:info(string.format("Weights in the output layer:\n%s",seq.layers[3].weights))
   
 end
 

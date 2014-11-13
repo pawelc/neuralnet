@@ -50,9 +50,9 @@ function Sequence:backwards()
 end
 
 --Perform adjustment of weights
-function Sequence:adjustWeights()
+function Sequence:adjustWeights(epoch)
   --now recompute weights of all layers
-  self.layers[1]:adjustWeights()  
+  self.layers[1]:adjustWeights(epoch)  
 end
 
 --Returns last computed result from the network after forwarding signal through it
@@ -65,17 +65,10 @@ function Sequence:error()
   return self.layers[#self.layers].error
 end
 
---Sets momentum constant of each layer
-function Sequence:momemtumConstant(momemtumConstant)
+--set learner to each layer
+function Sequence:learner(learner)
   for _,l in ipairs(self.layers) do
-    l.momemtumConstant=momemtumConstant
-  end    
-end
-
---Sets learning rate of each layer
-function Sequence:learningRate(learningRate)
-  for _,l in ipairs(self.layers) do
-    l.learningRate=learningRate
+    l.learner=learner
   end    
 end
 

@@ -38,8 +38,8 @@ function MatrixOutputLayer:backwards()
 end
 
 --adjusting weights
-function MatrixOutputLayer:adjustWeights()  
-  self.deltaWeights = self.deltaWeights * self.momemtumConstant + self.minusGradientErrorWrtWeight * self.learningRate
+function MatrixOutputLayer:adjustWeights(epoch)  
+  self.deltaWeights = self.deltaWeights * self.learner.momentumFun() + self.minusGradientErrorWrtWeight * self.learner.learningRateFun()
   self.weights = self.weights + self.deltaWeights
 end
 

@@ -46,7 +46,7 @@ local function buildModel(params)
   seq:addLayer(output.new(1):
                   actFun(act.linAct):
                   errFun(err.simple):
-                  weightGenFun(weighGen.uniformAroundZero))  
+                  weightGenFun(weighGen.uniformAroundZero))
   --initialize neural net             
   seq:initialise() 
   return seq   
@@ -66,10 +66,10 @@ local function main()
     buildModelFun = buildModel,
     dataSetup=dataSetup,
     nFolds=10,
-    learner=StopAfterNEpochsLearner:new{nEpochs=50,shouldCheckGradient=false}
-      :constLearningRate(0.1)
+    learner = StopAfterNEpochsLearner:new{nEpochs=50,shouldCheckGradient=false}
+      :expLearningRate(0.1,1.1)
       :constMomentum(0)
-    }
+  }
   
   --show best found model
   logger:info(string.format("Selected model with params: %s, performance: %s",TableUtils.tostring(bestModel.params),TableUtils.tostring(bestModel.perf)))
