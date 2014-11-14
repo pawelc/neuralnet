@@ -132,6 +132,7 @@ function Learner.hyperGridSearch(opts)
   end
   local bestModel=nil
   
+  --recursively creating grid of all parameters, doing exhaustive search over hyper parameters
   function hyperGridSearch(flattened,params,idx)
     if(idx <= #paramsNames) then
       local paramList = params[paramsNames[idx]]    
@@ -140,7 +141,7 @@ function Learner.hyperGridSearch(opts)
         hyperGridSearch(flattened,params,idx+1) 
       end
     else
-      local rmse=Learner.crossValidate(buildModelFun(flattened),dataSetup.trainAndValidationDataSetup, nFolds,learner)
+      local rmse=Learner.crossValidate(buildModelFun(flattened,learner),dataSetup.trainAndValidationDataSetup, nFolds,learner)
       logger:info(string.format("For params: %s average validation RMSE is %f",TableUtils.tostring(flattened),rmse))
       if bestModel == nil or bestModel.perf.validRmse > rmse then
         bestModel = {params=TableUtils.shallowCopy(flattened)}
@@ -152,7 +153,7 @@ function Learner.hyperGridSearch(opts)
   hyperGridSearch({},params,1)  
   
   --using selected hyper parameters train model on train and validation data and compute error on test data to get genralization performance
-  local seq=buildModelFun(bestModel.params)
+  local seq=buildModelFun(bestModel.params,learner)
   learner:learn(seq,dataSetup.trainAndValidationData[{{},{1,dataSetup.trainAndValidationData:size(2)-1}}],dataSetup.trainAndValidationData[{{},dataSetup.trainAndValidationData:size(2)}])
   bestModel.perf.testRmse = learner.rmse(seq,dataSetup.testData[{{},{1,dataSetup.testData:size(2)-1}}],dataSetup.testData[{{},dataSetup.testData:size(2)}])  
   return bestModel

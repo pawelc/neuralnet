@@ -28,7 +28,7 @@ logger = logging.new(function(self, level, message)
 logger:setLevel (logging.INFO)
 
 --function that build model witch can be prametrized with different hyperparameters
-local function buildModel(params)
+local function buildModel(params,learner)
   --create sequence of layers
   --setting seed so the experiment can be repeted 
   t.manualSeed(123)    
@@ -62,7 +62,7 @@ local function main()
    
   --look for the best model using grid search over hyper parameters
   local bestModel = Learner.hyperGridSearch{
-    params = {layer1Size={1,2},layer2Size={1,2}},
+    params = {layer1Size={1,2,3,4,5,6,7,8,9,10},layer2Size={1,2,3,4,5,6,7,8,9,10}},
     buildModelFun = buildModel,
     dataSetup=dataSetup,
     nFolds=10,
@@ -72,7 +72,7 @@ local function main()
     }
   
   --show best found model
-  logger:info(string.format("Selected model with params: %s, performance: %s",TableUtils.tostring(bestModel.params),TableUtils.tostring(bestModel.perf)))
+  logger:info(string.format("Selected model with params: %s,\nperformance: %s",TableUtils.tostring(bestModel.params),TableUtils.tostring(bestModel.perf)))
 end
 
 main()
