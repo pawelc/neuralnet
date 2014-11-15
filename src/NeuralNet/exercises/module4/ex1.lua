@@ -39,10 +39,10 @@ local function main()
 
   --create sequence of layers
   local seq=sequence:new()
-  --add layer with 2 inputs
+  --add layer with 4 inputs as the dimension of the input of the iris data set
   seq:addLayer(input.new(4))
-  --add hiddent layer with 2 neurons, tanh activation and uniform weight initialization 
-  seq:addLayer(MatrixHebbianLayer.new(3):                  
+  --output is the hebbian layer with the same number of neurons 
+  seq:addLayer(MatrixHebbianLayer.new(4):                  
                   weightGenFun(weighGen.uniformAroundZero))                 
   
   --initialize neural net             

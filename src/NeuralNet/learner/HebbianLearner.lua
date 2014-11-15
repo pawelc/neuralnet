@@ -14,10 +14,8 @@ function HebbianLearner:learn(seq,inputSignal)
   seq:learner(self)  
   local dataSize=inputSignal:size(1)
   for e = 1,self.nEpochs do
-    local rowPermutation = torch.randperm(dataSize)
-    for i = 1,dataSize do
+    for row = 1,dataSize do
       self.epoch = e
-      local row=rowPermutation[i]
       local input=inputSignal[{row,{}}]
       self:forward(seq,input)  
       seq:adjustWeights(e)                 
