@@ -20,11 +20,14 @@ function MatrixOutputLayer:initialise()
   end
   self.weights=self.weightGenFun(self.size,self.prev.size+1)
   self.deltaWeights=t.Tensor(self.size,self.prev.size+1):zero()
+  
+  self.input=torch.Tensor(self.prev.size+1):zero()
+  self.input[self.input:size(1)] = 1
 end
 
 --Output layer computes its preactivation which is tranfered through activation function which produces output
 function MatrixOutputLayer:forward()
-  self.input = self.prev.output
+  self.input:narrow(1,1,self.prev.size):copy(self.prev.output)
   self.preactivation = self.weights*self.input
   self.output = self.actFun.fun(self.preactivation)
   self.error = self.errFun(self.expected,self.output)
@@ -33,7 +36,7 @@ end
 --Perform backward pass through the output layer
 function MatrixOutputLayer:backwards()
   self.localGradient=t.cmul(self.error,self.actFun.funD(self.output))
-  self.minusGradientErrorWrtWeight=torch.Tensor(self.size, self.prev.output:size(1)):zero():addr(self.localGradient,self.prev.output)
+  self.minusGradientErrorWrtWeight=torch.Tensor(self.size, self.input:size(1)):zero():addr(self.localGradient,self.input)
   self.prev:backwards()
 end
 
