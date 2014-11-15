@@ -22,14 +22,13 @@ function MatrixHiddenLayer:initialise()
 end
 
 --Hidden layer computes its preactivation which is tranfered through activation function which produces output sent to the next layer
-function MatrixHiddenLayer:forward(signal)
-  self.input = signal
-  self.preactivation = self.weights*signal
+function MatrixHiddenLayer:forward()
+  self.input = self.prev.output
+  self.preactivation = self.weights*self.input
   self.output = self.actFun.fun(self.preactivation)
   --extend output
   self.output = self.output:resize(self.output:size(1)+1)
   self.output[self.output:size(1)] = 1
-  self.next:forward(self.output)
 end
 
 --Perform backward pass through the hidden layer

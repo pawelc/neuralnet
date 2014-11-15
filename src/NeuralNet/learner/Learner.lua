@@ -67,11 +67,11 @@ function Learner.checkGradient(seq,input,target)
   end
 end
 
-function Learner.rmse(seq,inputSignal,targetSignal)
+function Learner:rmse(seq,inputSignal,targetSignal)
   local dataSize=inputSignal:size(1)  
   local rmsev = 0
   for i = 1,dataSize do
-    seq:forward(inputSignal[{i,{}}],targetSignal[{{i}}])  
+    self:forward(seq,inputSignal[{i,{}}],targetSignal[{{i}}])  
     rmsev = seq:error()*seq:error()+rmsev                 
   end
   return torch.sqrt(rmsev/dataSize)
@@ -102,11 +102,11 @@ function Learner:constMomentum(momentum)
 end
 
 --performs training and compute validation error over folds cross validation for different hyperparameters
-function Learner.crossValidate(model,trainAndValidationDataSetup,folds,learner)
+function Learner:crossValidate(model,trainAndValidationDataSetup,folds,learner)
   local avgRmse = 0
   for _,trainValidData in ipairs(trainAndValidationDataSetup) do 
     learner:learn(model,trainValidData.train[{{},{1,trainValidData.train:size(2)-1}}],trainValidData.train[{{},trainValidData.train:size(2)}])
-    avgRmse = avgRmse + Learner.rmse(model,trainValidData.valid[{{},{1,trainValidData.valid:size(2)-1}}],trainValidData.valid[{{},trainValidData.valid:size(2)}])
+    avgRmse = avgRmse + self:rmse(model,trainValidData.valid[{{},{1,trainValidData.valid:size(2)-1}}],trainValidData.valid[{{},trainValidData.valid:size(2)}])
   end
   avgRmse=avgRmse/folds  
   return avgRmse
@@ -141,8 +141,8 @@ function Learner.hyperGridSearch(opts)
         hyperGridSearch(flattened,params,idx+1) 
       end
     else
-      local rmse=Learner.crossValidate(buildModelFun(flattened,learner),dataSetup.trainAndValidationDataSetup, nFolds,learner)
-      logger:info(string.format("For params: %s average validation RMSE is %f",TableUtils.tostring(flattened),rmse))
+      local rmse=learner:crossValidate(buildModelFun(flattened,learner),dataSetup.trainAndValidationDataSetup, nFolds,learner)
+      logger:info(string.format("For params: %s\naverage validation RMSE is %f",TableUtils.tostring(flattened),rmse))
       if bestModel == nil or bestModel.perf.validRmse > rmse then
         bestModel = {params=TableUtils.shallowCopy(flattened)}
         bestModel.perf = {validRmse=rmse}
@@ -155,7 +155,7 @@ function Learner.hyperGridSearch(opts)
   --using selected hyper parameters train model on train and validation data and compute error on test data to get genralization performance
   local seq=buildModelFun(bestModel.params,learner)
   learner:learn(seq,dataSetup.trainAndValidationData[{{},{1,dataSetup.trainAndValidationData:size(2)-1}}],dataSetup.trainAndValidationData[{{},dataSetup.trainAndValidationData:size(2)}])
-  bestModel.perf.testRmse = learner.rmse(seq,dataSetup.testData[{{},{1,dataSetup.testData:size(2)-1}}],dataSetup.testData[{{},dataSetup.testData:size(2)}])  
+  bestModel.perf.testRmse = learner:rmse(seq,dataSetup.testData[{{},{1,dataSetup.testData:size(2)-1}}],dataSetup.testData[{{},dataSetup.testData:size(2)}])  
   return bestModel
 end
 

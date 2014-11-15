@@ -37,10 +37,10 @@ function Sequence:initialise()
 end
 
 --Perform forward pass through the network
-function Sequence:forward(signal,expected)
-  self.layers[#self.layers].expected=expected
-  self.layers[1]:forward(signal)
-  return self.layers[#self.layers].output
+function Sequence:forward(fun)
+  for _,layer in ipairs(self.layers) do
+    fun(layer)
+  end
 end
 
 --Perform backward pass through the network

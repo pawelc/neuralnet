@@ -21,10 +21,8 @@ function MatrixInputLayer:initialise()
 end
 
 --Input layer only forward signal to the first hiddent layer
-function MatrixInputLayer:forward(signal)
-  self.input = signal
+function MatrixInputLayer:forward()
   self.output:narrow(1,1,self.size):copy(self.input)
-  self.next:forward(self.output)
 end
 
 --Perform backward pass through the inout layer

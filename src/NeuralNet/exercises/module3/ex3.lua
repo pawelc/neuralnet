@@ -13,7 +13,7 @@ local output = require 'NeuralNet.layer.MatrixOutputLayer'
 local act = require 'NeuralNet.Activation'
 local err = require 'NeuralNet.Error'
 local weighGen = require 'NeuralNet.WeightGen'
-local StopAfterNEpochsLearner = require 'NeuralNet.learner.StopAfterNEpochsLearner'
+local StopAfterNEpochsBackPropLearner = require 'NeuralNet.learner.StopAfterNEpochsBackPropLearner'
 local Learner = require 'NeuralNet.learner.Learner'
 local data = require 'NeuralNet.utils.Data'
 local TableUtils = require 'NeuralNet.utils.TableUtils'
@@ -55,7 +55,9 @@ end
 
 local function main()
   --Load the data file
-  local ndp = data.fileToTensor(projectLocation.."/src/NeuralNet/exercises/module3/NDP.dat",3,"%s*") 
+  local ndp = data.fileToTensor{file=projectLocation.."/src/NeuralNet/exercises/module3/NDP.dat",
+                               nColumns=3,
+                               sep="%s"}
   
   --split data for cross validation and test data
   local dataSetup = data.setupTrainValidationTestData(ndp,10)
@@ -66,7 +68,7 @@ local function main()
     buildModelFun = buildModel,
     dataSetup=dataSetup,
     nFolds=10,
-    learner=StopAfterNEpochsLearner:new{nEpochs=50,shouldCheckGradient=false}
+    learner=StopAfterNEpochsBackPropLearner:new{nEpochs=50,shouldCheckGradient=false}
       :constLearningRate(0.1)
       :constMomentum(0)
     }

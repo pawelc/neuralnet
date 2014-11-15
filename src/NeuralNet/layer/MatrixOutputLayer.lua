@@ -23,9 +23,9 @@ function MatrixOutputLayer:initialise()
 end
 
 --Output layer computes its preactivation which is tranfered through activation function which produces output
-function MatrixOutputLayer:forward(signal)
-  self.input = signal
-  self.preactivation = self.weights*signal
+function MatrixOutputLayer:forward()
+  self.input = self.prev.output
+  self.preactivation = self.weights*self.input
   self.output = self.actFun.fun(self.preactivation)
   self.error = self.errFun(self.expected,self.output)
 end

@@ -6,12 +6,39 @@ local Learner = require 'NeuralNet.learner.Learner'
 
 local Data={}
 
-function Data.fileToTensor(file,nColumns,sep)
+--read data from the file and returns Tensor
+-- file - file to read from
+-- nColumns - number of column in the file
+-- sep - separator
+-- mapping which defines how to mul n-th column of non numeric data into numeric one
+function Data.fileToTensor(params)
+  local file = params.file
+  local nColumns = params.nColumns
+  local sep = params.sep
+  local mapping = params.mapping
+  
   local lines=io.lines(file)
   local table = {}
+  local pattern = "%s*(%S+)%s*"..sep.."%s*"..string.rep("(%S+)%s*"..sep.."%s*",nColumns-2).."(%S+).*"
+  local rowNum = 0
   for l in  lines do
-       table[#table+1] = {string.match(l, string.rep(sep.."(%S+)"..sep,nColumns))}
+       rowNum = rowNum + 1
+       local row={string.match(l, pattern)}
+       if #row == nColumns then
+        table[#table+1] = row
+       else
+        logger:warn(string.format("No including %d row from file: %s because parsed columns: %d",rowNum,file,#row))
+       end
   end
+  
+  if mapping then
+    for col,mappingFun in pairs(params.mapping) do
+      for row = 1,#table do
+        table[row][col]=mappingFun(table[row][col])
+      end 
+    end
+  end 
+  
   return torch.Tensor(table)
 end
 
