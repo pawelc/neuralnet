@@ -6,6 +6,7 @@ projectLocation = "/Users/pawelc/git/neuralnet"
 --setup path so lua can find required modules
 package.path=package.path..";/Users/pawelc/git/neuralnet/src/?.lua"
 
+require 'pl'
 local t = require 'torch'
 local sequence = require 'NeuralNet.Sequence'
 local input = require 'NeuralNet.layer.MatrixInputLayer'
@@ -17,6 +18,16 @@ require "logging"
 local weighGen = require 'NeuralNet.WeightGen'
 local Error = require 'NeuralNet.Error'
 local TableUtils = require 'NeuralNet.utils.TableUtils'
+
+----------------------------------------------------------------------
+-- parse command-line options
+--
+local opt = lapp[[
+   -i,--normalize_input                 should the input be normalized
+   -w,--normalize_weights               should the weights be normalized after each weight update
+   -e,--epochs            (default 1)   number of epochs
+   -l,--learning_rate     (default 0.1) learning rate
+]]
 
 logger = logging.new(function(self, level, message)
 --                             print(level, " "..message)
@@ -57,24 +68,27 @@ local function main()
                                 end  
                                end}
                               }
-  --normalizing input data                              
-  for i = 1,4 do
-     iris[{{},i}]:add(-iris[{{},i}]:mean())
-     iris[{{},i}]:div(iris[{{},i}]:std())
+  if opt.normalize_input then                              
+    --normalizing input data                              
+    for i = 1,4 do
+      iris[{{},i}]:add(-iris[{{},i}]:mean())
+      iris[{{},i}]:div(iris[{{},i}]:std())
+    end
   end   
   
   --input data is only first 4 columns
   local inputData = iris[{{},{1,4}}] 
  
   local model = buildModel()
-  local learner = HebbianLearner:new{nEpochs=1000}:
-    constLearningRate(0.1):learn(model,inputData)
+  local learner = HebbianLearner:new{nEpochs=opt.epochs}
+    :setNormalizeWeights(opt.normalize_weights)
+    :constLearningRate(opt.learning_rate)
+    :learn(model,inputData)
   
   for i = 1,iris:size(1) do
     print(model:forwardSig(inputData[{i,{}}]):select(1,1)..","..iris[i][5])
   end    
              
 end
-  
   
 main()                    

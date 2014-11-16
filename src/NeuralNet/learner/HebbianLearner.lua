@@ -9,6 +9,11 @@ function HebbianLearner:new(params)
   return HebbianLearner:__new(params)
 end
 
+function HebbianLearner:setNormalizeWeights(normalize)
+  self.normalizeWeights = normalize 
+  return self
+end
+
 --learn the sequence of layers using simple hebbian update rule
 function HebbianLearner:learn(seq,inputSignal)  
   seq:learner(self)  

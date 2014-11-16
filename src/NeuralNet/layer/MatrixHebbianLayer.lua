@@ -29,7 +29,9 @@ function MatrixHebbianLayer:adjustWeights(epoch)
     self.deltaWeights = torch.Tensor(self.output:size(1), self.input:size(1)):zero():addr(self.output,self.input) * self.learner.learningRateFun()
     self.weights = self.weights + self.deltaWeights
     --normalize weights
-    self.weights = torch.div(self.weights,math.sqrt(torch.dot(self.weights,self.weights))) 
+    if self.learner.normalizeWeights then
+      self.weights = torch.div(self.weights,math.sqrt(torch.dot(self.weights,self.weights)))
+    end 
 end
 
 --Set weight generator
