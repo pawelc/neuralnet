@@ -10,9 +10,10 @@ require 'pl'
 local t = require 'torch'
 local sequence = require 'NeuralNet.Sequence'
 local input = require 'NeuralNet.layer.MatrixInputLayer'
-local MatrixHebbianLayer = require 'NeuralNet.layer.MatrixHebbianLayer'
-local HebbianLearner = require 'NeuralNet.learner.HebbianLearner'
+local MatrixAggregateLayer = require 'NeuralNet.layer.MatrixAggregateLayer'
+local UnsupervisedLearner = require 'NeuralNet.learner.UnsupervisedLearner'
 local Learner = require 'NeuralNet.learner.Learner'
+local AdjustParamsFunctions = require 'NeuralNet.learner.AdjustParamsFunctions'
 local Data = require 'NeuralNet.utils.Data'
 require "logging"
 local weighGen = require 'NeuralNet.WeightGen'
@@ -46,9 +47,10 @@ local function buildModel()
   --add layer with 4 inputs as the dimension of the input of the iris data set
   seq:addLayer(input.new(4))
   --output is the hebbian layer with the same number of neurons 
-  seq:addLayer(MatrixHebbianLayer.new(1):                  
+  seq:addLayer(MatrixAggregateLayer.new(1):                  
                   weightGenFun(weighGen.uniformAroundZero):
-                  errFun(Error.classification))                 
+                  setAdjustParamsFun(AdjustParamsFunctions.createHebbianAdjustParamsFun(opt.normalize_weights,opt.learning_rate))
+                  )                 
   
   --initialize neural net             
   seq:initialise()
@@ -80,10 +82,7 @@ local function main()
   local inputData = iris[{{},{1,4}}] 
  
   local model = buildModel()
-  local learner = HebbianLearner:new{nEpochs=opt.epochs}
-    :setNormalizeWeights(opt.normalize_weights)
-    :constLearningRate(opt.learning_rate)
-    :learn(model,inputData)
+  local learner = UnsupervisedLearner:new{nEpochs=opt.epochs}:learn(model,inputData)
   
   for i = 1,iris:size(1) do
     print(model:forwardSig(inputData[{i,{}}]):select(1,1)..","..iris[i][5])

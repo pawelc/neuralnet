@@ -43,12 +43,6 @@ function MatrixOutputLayer:backwards()
   self.prev:backwards()
 end
 
---adjusting weights
-function MatrixOutputLayer:adjustWeights(epoch)  
-  self.deltaWeights = self.deltaWeights * self.learner.momentumFun() + self.minusGradientErrorWrtWeight * self.learner.learningRateFun()
-  self.weights = self.weights + self.deltaWeights
-end
-
 --Set activation function
 function MatrixOutputLayer:actFun(actFun)
   self.actFun = actFun

@@ -94,30 +94,6 @@ function Learner:classError(seq,inputSignal,targetSignal)
   return ce/dataSize
 end
 
---create function computing learning rate that changes exponentially for each epoch
-function Learner:expLearningRate(initialLearningRate,expDecayConst)
-  self.learningRateFun=function()
-    return initialLearningRate*torch.exp(expDecayConst*(self.epoch-1))
-  end  
-  return self
-end
-
---create function computing learning rate the is constant for each epoch
-function Learner:constLearningRate(learningRate)
-  self.learningRateFun = function()
-    return learningRate
-  end  
-  return self
-end
-
---create function computing momentum rate the is constant for each epoch
-function Learner:constMomentum(momentum)
-  self.momentumFun = function()
-    return momentum
-  end  
-  return self
-end
-
 --performs training and compute validation error over folds cross validation for different hyperparameters
 function Learner:crossValidate(model,trainAndValidationDataSetup,folds,learner)
   local avgError = 0

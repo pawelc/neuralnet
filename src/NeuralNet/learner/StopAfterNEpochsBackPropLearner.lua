@@ -24,7 +24,12 @@ function StopAfterNEpochsBackPropLearner:learn(seq,inputSignal,targetSignal)
       seq:forwardSig(input,target)  
       seq:backwards()
       Learner.checkGradient(seq,input,target) 
-      seq:adjustWeights(e)                 
+      seq:forwardFun(function(layer)
+        if layer.adjustParamsFun then
+          layer.adjustParamsFun(layer, e)
+        end
+      end
+      )
     end
   end
 end

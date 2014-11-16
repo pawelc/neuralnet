@@ -42,6 +42,7 @@ function Sequence:forwardSig(signal,expected)
   self.layers[#self.layers].expected=expected
   self:forwardFun(function(layer)
     layer:forward()   
+    self:copyOutputToNextInput(layer)
   end) 
   return self.layers[#self.layers].output
 end
@@ -49,8 +50,7 @@ end
 --Perform forward pass through the network using function to be executed on each layer
 function Sequence:forwardFun(fun)
   for _,layer in ipairs(self.layers) do
-    fun(layer)
-    self:copyOutputToNextInput(layer)
+    fun(layer)    
   end
 end
 
@@ -65,12 +65,6 @@ end
 function Sequence:backwards()
   --starting from the output layer
   self.layers[#self.layers]:backwards()  
-end
-
---Perform adjustment of weights
-function Sequence:adjustWeights(epoch)
-  --now recompute weights of all layers
-  self.layers[1]:adjustWeights(epoch)  
 end
 
 --Returns last computed result from the network after forwarding signal through it

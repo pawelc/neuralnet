@@ -25,4 +25,9 @@ function MatrixLayer:errFun(errFun)
   return self
 end
 
+function MatrixLayer:setAdjustParamsFun(adjustParamsFun)
+  self.adjustParamsFun = adjustParamsFun
+  return self
+end
+
 return MatrixLayer

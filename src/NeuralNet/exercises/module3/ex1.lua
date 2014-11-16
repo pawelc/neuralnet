@@ -6,6 +6,7 @@ local sequence = require 'NeuralNet.Sequence'
 local input = require 'NeuralNet.layer.MatrixInputLayer'
 local hidden = require 'NeuralNet.layer.MatrixHiddenLayer'
 local output = require 'NeuralNet.layer.MatrixOutputLayer'
+local AdjustParamsFunctions = require 'NeuralNet.learner.AdjustParamsFunctions'
 local act = require 'NeuralNet.Activation'
 local err = require 'NeuralNet.Error'
 local weighGen = require 'NeuralNet.WeightGen'
@@ -31,12 +32,17 @@ local function main()
   --add hiddent layer with 2 neurons, tanh activation and uniform weight initialization 
   seq:addLayer(hidden.new(2):
                   actFun(act.tanhAct):
-                  weightGenFun(weighGen.uniformAroundZero))                 
+                  weightGenFun(weighGen.uniformAroundZero):
+                  setAdjustParamsFun(AdjustParamsFunctions.createHiddenLayerBackPropAdjustParamsFun{momentum=0,
+                                                                                                    learningRateFun=AdjustParamsFunctions.
+                                                                                                    createConstLearningRate(0.1)}))                 
   --add output layer with 1 output neuron with tanh activation functioin                
   seq:addLayer(output.new(1):
                   actFun(act.tanhAct):
                   errFun(err.simple):
-                  weightGenFun(weighGen.uniformAroundZero))
+                  weightGenFun(weighGen.uniformAroundZero):
+                  setAdjustParamsFun(AdjustParamsFunctions.createOutputLayerBackPropAdjustParamsFun{momentum=0,learningRateFun=AdjustParamsFunctions.
+                                                                                                    createConstLearningRate(0.1)}))
   
   --initialize neural net             
   seq:initialise()  
@@ -63,8 +69,6 @@ local function main()
   local learner = StopAfterNEpochsBackPropLearner:new{
     nEpochs=nEpochs,
     shouldCheckGradient=false}
-      :constLearningRate(0.1)
-      :constMomentum(0)
   
   logger:info(string.format("Before learning RMSE: %f",learner:rmse(seq,inputSignal,targetSignal)))
   

@@ -39,13 +39,6 @@ function MatrixHiddenLayer:backwards()
   self.prev:backwards()
 end
 
---adjusting weights
-function MatrixHiddenLayer:adjustWeights(epoch)   
-  self.deltaWeights = self.deltaWeights * self.learner.momentumFun() + self.minusGradientErrorWrtWeight*self.learner.learningRateFun()
-  self.weights = self.weights + self.deltaWeights
-  self.next:adjustWeights()  
-end
-
 --Set activation function
 function MatrixHiddenLayer:actFun(actFun)
   self.actFun = actFun

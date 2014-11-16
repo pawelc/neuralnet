@@ -3,19 +3,19 @@
 local Learner=require("NeuralNet.learner.Learner")
 local t=require("torch")
 
-local HebbianLearner = Learner:__new()
+local UnsupervisedLearner = Learner:__new()
 
-function HebbianLearner:new(params)
-  return HebbianLearner:__new(params)
+function UnsupervisedLearner:new(params)
+  return UnsupervisedLearner:__new(params)
 end
 
-function HebbianLearner:setNormalizeWeights(normalize)
+function UnsupervisedLearner:setNormalizeWeights(normalize)
   self.normalizeWeights = normalize 
   return self
 end
 
 --learn the sequence of layers using simple hebbian update rule
-function HebbianLearner:learn(seq,inputSignal)  
+function UnsupervisedLearner:learn(seq,inputSignal)  
   seq:learner(self)  
   local dataSize=inputSignal:size(1)
   for e = 1,self.nEpochs do
@@ -25,10 +25,15 @@ function HebbianLearner:learn(seq,inputSignal)
       local row=rowPermutation[i]
       local input=inputSignal[{row,{}}]
       seq:forwardSig(input)
-      seq:adjustWeights(e)                 
+      seq:forwardFun(function(layer)
+        if layer.adjustParamsFun then
+          layer:adjustParamsFun(layer, e)
+        end
+      end
+      )
     end
   end
   return self
 end
 
-return HebbianLearner
+return UnsupervisedLearner

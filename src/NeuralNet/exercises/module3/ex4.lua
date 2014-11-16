@@ -19,6 +19,7 @@ local data = require 'NeuralNet.utils.Data'
 local TableUtils = require 'NeuralNet.utils.TableUtils'
 local t = require 'torch'
 require "logging"
+local AdjustParamsFunctions = require 'NeuralNet.learner.AdjustParamsFunctions'
 
 --logging
 logger = logging.new(function(self, level, message)
@@ -38,19 +39,22 @@ local function buildModel(params,learner)
   --add hiddent layer with 2 neurons, tanh activation and uniform weight initialization 
   seq:addLayer(hidden.new(params.layer1Size):
                   actFun(act.tanhAct):
-                  weightGenFun(weighGen.uniformAroundZero))
+                  weightGenFun(weighGen.uniformAroundZero):
+                  setAdjustParamsFun(AdjustParamsFunctions.createHiddenLayerBackPropAdjustParamsFun{momentum=0,learningRateFun=AdjustParamsFunctions.
+                                                                                                    createExpLearningRateFun{initialLearningRate=params.initialLearningRate,expDecayConst=params.expDecayConst}}))
   seq:addLayer(hidden.new(params.layer2Size):
                     actFun(act.tanhAct):
-                    weightGenFun(weighGen.uniformAroundZero))                                   
+                    weightGenFun(weighGen.uniformAroundZero):
+                    setAdjustParamsFun(AdjustParamsFunctions.createHiddenLayerBackPropAdjustParamsFun{momentum=0,learningRateFun=AdjustParamsFunctions.
+                                                                                                    createExpLearningRateFun{initialLearningRate=params.initialLearningRate,expDecayConst=params.expDecayConst}}))                                 
   --add output layer with 1 output neuron with tanh activation functioin                
   seq:addLayer(output.new(1):
                   actFun(act.linAct):
                   errFun(err.simple):
-                  weightGenFun(weighGen.uniformAroundZero))
+                  weightGenFun(weighGen.uniformAroundZero):
+                  setAdjustParamsFun(AdjustParamsFunctions.createOutputLayerBackPropAdjustParamsFun{momentum=0,learningRateFun=AdjustParamsFunctions.
+                                                                                                    createExpLearningRateFun{initialLearningRate=params.initialLearningRate,expDecayConst=params.expDecayConst}}))
   
-  --setting exponential lerning parameters to learn this model
-  learner:expLearningRate(params.initialLearningRate,params.expDecayConst)                
-                    
   --initialize neural net             
   seq:initialise() 
   return seq   
@@ -73,7 +77,6 @@ local function main()
     dataSetup=dataSetup,
     nFolds=10,
     learner = StopAfterNEpochsBackPropLearner:new{nEpochs=50,shouldCheckGradient=false}      
-      :constMomentum(0)
   }
   
   --show best found model
