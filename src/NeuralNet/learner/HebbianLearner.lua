@@ -14,21 +14,16 @@ function HebbianLearner:learn(seq,inputSignal)
   seq:learner(self)  
   local dataSize=inputSignal:size(1)
   for e = 1,self.nEpochs do
-    for row = 1,dataSize do
+    local rowPermutation = torch.randperm(dataSize)
+    for i = 1,dataSize do
       self.epoch = e
+      local row=rowPermutation[i]
       local input=inputSignal[{row,{}}]
-      self:forward(seq,input)  
+      seq:forwardSig(input)
       seq:adjustWeights(e)                 
     end
   end
-end
-
---Perform forward pass through the network
-function HebbianLearner:forward(seq,signal)
-  seq.layers[1].input=signal
-  seq:forward(function(layer)
-    layer:forward()   
-  end) 
+  return self
 end
 
 return HebbianLearner

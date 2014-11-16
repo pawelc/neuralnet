@@ -34,7 +34,17 @@ function Data.fileToTensor(params)
   if mapping then
     for col,mappingFun in pairs(params.mapping) do
       for row = 1,#table do
-        table[row][col]=mappingFun(table[row][col])
+        translated=mappingFun(table[row][col])
+        if type(translated) == "number" then
+          table[row][col] = translated
+        elseif type(translated) == "table" then
+          --remove translated element
+          table[row][#table[row]]=nil
+          --append translated table into current row
+          for _,v in ipairs(translated) do table[row][#table[row]+1] = v end
+        else
+          error("Cannot decode: "..translated)
+        end
       end 
     end
   end 
@@ -43,34 +53,46 @@ function Data.fileToTensor(params)
 end
 
 --splits data into test data and validation/train folds 
-function Data.setupTrainValidationTestData(data,folds)
+function Data.setupTrainValidationTestData(inputData,targetData,folds)
   --create permutation of index into data so we can randomly split into test data and trainAndValidationData
-  local shuffle = torch.randperm(data:size(1))
-  local testDataIdx = torch.floor(0.15*data:size(1))
+  local shuffle = torch.randperm(inputData:size(1))
+  local testDataIdx = torch.floor(0.15*inputData:size(1))
   
-  local testData=torch.Tensor() 
+  local inputTestData=torch.Tensor()
+  local targetTestData=torch.Tensor() 
   
-  testData:index(data,1,torch.Tensor.long(shuffle[{{1,testDataIdx}}]))
-  local trainAndValidationData = data:index(1,torch.Tensor.long(shuffle[{{testDataIdx+1,data:size(1)}}]))
+  inputTestData:index(inputData,1,torch.Tensor.long(shuffle[{{1,testDataIdx}}]))
+  targetTestData:index(targetData,1,torch.Tensor.long(shuffle[{{1,testDataIdx}}]))
   
+  local trainAndValidationInputData = inputData:index(1,torch.Tensor.long(shuffle[{{testDataIdx+1,inputData:size(1)}}]))
+  local trainAndValidationTargetData = targetData:index(1,torch.Tensor.long(shuffle[{{testDataIdx+1,inputData:size(1)}}]))
   
-  local itemsInFold=torch.floor(trainAndValidationData:size(1)/folds)
+  local itemsInFold=torch.floor(trainAndValidationInputData:size(1)/folds)
   local trainAndValidationDataSetup={}
+  
   for fold = 1,folds do 
     local validStartIdx=1+(fold-1)*itemsInFold
     local validEndIdx = fold*itemsInFold
-    local validData=trainAndValidationData[{{validStartIdx,validEndIdx},{}}]
-    local trainData=torch.Tensor(trainAndValidationData:size(1)-validData:size(1),data:size(2))
+    
+    local validInputData=trainAndValidationInputData[{{validStartIdx,validEndIdx},{}}]
+    local validTargetData=trainAndValidationTargetData[{{validStartIdx,validEndIdx},{}}]
+    
+    local trainInputData=torch.Tensor(trainAndValidationInputData:size(1)-validInputData:size(1),inputData:size(2))
+    local trainTargetData=torch.Tensor(trainAndValidationTargetData:size(1)-validTargetData:size(1),targetData:size(2))
+    
     if(validStartIdx > 1) then
-      trainData[{{1,validStartIdx-1},{}}]=trainAndValidationData[{{1,validStartIdx-1},{}}]
+      trainInputData[{{1,validStartIdx-1},{}}]=trainAndValidationInputData[{{1,validStartIdx-1},{}}]
+      trainTargetData[{{1,validStartIdx-1},{}}]=trainAndValidationTargetData[{{1,validStartIdx-1},{}}]
     end
-    if(validEndIdx+1 < trainAndValidationData:size(1)) then
-      trainData[{{validStartIdx,trainData:size(1)},{}}]=trainAndValidationData[{{validEndIdx+1,trainAndValidationData:size(1)},{}}]
+    if(validEndIdx+1 < trainAndValidationInputData:size(1)) then
+      trainInputData[{{validStartIdx,trainInputData:size(1)},{}}]=trainAndValidationInputData[{{validEndIdx+1,trainAndValidationInputData:size(1)},{}}]
+      trainTargetData[{{validStartIdx,trainTargetData:size(1)},{}}]=trainAndValidationTargetData[{{validEndIdx+1,trainAndValidationTargetData:size(1)},{}}]
     end
     
-    trainAndValidationDataSetup[fold]={train=trainData,valid=validData}
+    trainAndValidationDataSetup[fold]={trainInput=trainInputData,trainTarget=trainTargetData,validInput=validInputData,validTarget=validTargetData}
   end
-  return {trainAndValidationDataSetup=trainAndValidationDataSetup,testData=testData,trainAndValidationData=trainAndValidationData}
+  return {trainAndValidationDataSetup=trainAndValidationDataSetup,testInputData=inputTestData,testTargetData=targetTestData,
+    trainAndValidationInputData=trainAndValidationInputData,trainAndValidationTargetData=trainAndValidationTargetData}
 end 
 
 return Data

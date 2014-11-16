@@ -21,7 +21,7 @@ function StopAfterNEpochsBackPropLearner:learn(seq,inputSignal,targetSignal)
       local row=rowPermutation[i]
       local input=inputSignal[{row,{}}]
       local target=targetSignal[{{row}}]
-      self:forward(seq,input,target)  
+      seq:forwardSig(input,target)  
       seq:backwards()
       Learner.checkGradient(seq,input,target) 
       seq:adjustWeights(e)                 
@@ -29,14 +29,8 @@ function StopAfterNEpochsBackPropLearner:learn(seq,inputSignal,targetSignal)
   end
 end
 
---Perform forward pass through the network
-function StopAfterNEpochsBackPropLearner:forward(seq,signal,expected)
-  seq.layers[1].input=signal
-  seq.layers[#seq.layers].expected=expected
-  seq:forward(function(layer)
-    layer:forward()   
-  end) 
-  return seq.layers[#seq.layers].output
+function StopAfterNEpochsBackPropLearner:error(seq,inputSignal,targetSignal)
+  return self:rmse(seq,inputSignal,targetSignal)
 end
 
 return StopAfterNEpochsBackPropLearner

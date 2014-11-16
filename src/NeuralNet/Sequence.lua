@@ -37,9 +37,27 @@ function Sequence:initialise()
 end
 
 --Perform forward pass through the network
-function Sequence:forward(fun)
+function Sequence:forwardSig(signal,expected)
+  self.layers[1].input=signal
+  self.layers[#self.layers].expected=expected
+  self:forwardFun(function(layer)
+    layer:forward()   
+  end) 
+  return self.layers[#self.layers].output
+end
+
+--Perform forward pass through the network using function to be executed on each layer
+function Sequence:forwardFun(fun)
   for _,layer in ipairs(self.layers) do
     fun(layer)
+    self:copyOutputToNextInput(layer)
+  end
+end
+
+function Sequence:copyOutputToNextInput(layer)
+  if layer.next then
+    --copy output to the next layer's input  
+    layer.next.input:narrow(1,1,layer.size):copy(layer.output)
   end
 end
 

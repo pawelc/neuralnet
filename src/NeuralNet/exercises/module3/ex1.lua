@@ -72,10 +72,10 @@ local function main()
   
   --check how we did with learning
   logger:info(string.format("After learning RMSE: %f",learner:rmse(seq,inputSignal,targetSignal)))  
-  logger:info(string.format("Trained answer for input: -1,1 is %s",learner:forward(seq,t.Tensor({-1,1}),t.Tensor({1}))))
-  logger:info(string.format("Trained answer for input: 1,-1 is %s",learner:forward(seq,t.Tensor({1,-1}),t.Tensor({1}))))
-  logger:info(string.format("Trained answer for input: -1,-1 is %s",learner:forward(seq,t.Tensor({-1,-1}),t.Tensor({-1}))))
-  logger:info(string.format("Trained answer for input: 1,1 is %s",learner:forward(seq,t.Tensor({1,1}),t.Tensor({-1}))))
+  logger:info(string.format("Trained answer for input: -1,1 is %s",seq:forwardSig(t.Tensor({-1,1}),t.Tensor({1}))))
+  logger:info(string.format("Trained answer for input: 1,-1 is %s",seq:forwardSig(t.Tensor({1,-1}),t.Tensor({1}))))
+  logger:info(string.format("Trained answer for input: -1,-1 is %s",seq:forwardSig(t.Tensor({-1,-1}),t.Tensor({-1}))))
+  logger:info(string.format("Trained answer for input: 1,1 is %s",seq:forwardSig(t.Tensor({1,1}),t.Tensor({-1}))))
   
   logger:info(string.format("Weights in the first hidden layer:\n%s",seq.layers[2].weights))
   logger:info(string.format("Weights in the output layer:\n%s",seq.layers[3].weights))

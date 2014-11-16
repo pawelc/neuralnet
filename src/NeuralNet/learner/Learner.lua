@@ -17,6 +17,13 @@ function Learner:__new (o)
   return o
 end
 
+--Create the input MatrixLayer of given size, only invoked by concreate layer type
+function Learner:setNEpochs (e)
+  self.nEpochs = e
+  return self
+end
+
+
 --Checks error gradient wrt weights numerically if it was properly computed by back prop.
 function Learner.checkGradient(seq,input,target)  
   if(Learner.shouldCheckGradient) then      
@@ -71,10 +78,20 @@ function Learner:rmse(seq,inputSignal,targetSignal)
   local dataSize=inputSignal:size(1)  
   local rmsev = 0
   for i = 1,dataSize do
-    self:forward(seq,inputSignal[{i,{}}],targetSignal[{{i}}])  
+    seq:forwardSig(inputSignal[{i,{}}],targetSignal[{{i}}])  
     rmsev = seq:error()*seq:error()+rmsev                 
   end
   return torch.sqrt(rmsev/dataSize)
+end
+
+function Learner:classError(seq,inputSignal,targetSignal)
+  local dataSize=inputSignal:size(1)  
+  local ce = 0
+  for i = 1,dataSize do
+    seq:forwardSig(inputSignal[{i,{}}],targetSignal[{i}])  
+    ce = seq:error()+ce                 
+  end
+  return ce/dataSize
 end
 
 --create function computing learning rate that changes exponentially for each epoch
@@ -103,13 +120,13 @@ end
 
 --performs training and compute validation error over folds cross validation for different hyperparameters
 function Learner:crossValidate(model,trainAndValidationDataSetup,folds,learner)
-  local avgRmse = 0
+  local avgError = 0
   for _,trainValidData in ipairs(trainAndValidationDataSetup) do 
-    learner:learn(model,trainValidData.train[{{},{1,trainValidData.train:size(2)-1}}],trainValidData.train[{{},trainValidData.train:size(2)}])
-    avgRmse = avgRmse + self:rmse(model,trainValidData.valid[{{},{1,trainValidData.valid:size(2)-1}}],trainValidData.valid[{{},trainValidData.valid:size(2)}])
+    learner:learn(model,trainValidData.trainInput[{{},{}}],trainValidData.trainTarget[{{},{}}])
+    avgError = avgError + self:error(model,trainValidData.validInput[{{},{}}],trainValidData.validTarget[{{},{}}])
   end
-  avgRmse=avgRmse/folds  
-  return avgRmse
+  avgError=avgError/folds  
+  return avgError
 end
 
 --performs grid search on different configuration of hyper parameters deffined.
@@ -141,11 +158,11 @@ function Learner.hyperGridSearch(opts)
         hyperGridSearch(flattened,params,idx+1) 
       end
     else
-      local rmse=learner:crossValidate(buildModelFun(flattened,learner),dataSetup.trainAndValidationDataSetup, nFolds,learner)
-      logger:info(string.format("For params: %s\naverage validation RMSE is %f",TableUtils.tostring(flattened),rmse))
-      if bestModel == nil or bestModel.perf.validRmse > rmse then
+      local error=learner:crossValidate(buildModelFun(flattened,learner),dataSetup.trainAndValidationDataSetup, nFolds,learner)
+      logger:info(string.format("For params: %s\naverage validation error is %f",TableUtils.tostring(flattened),error))
+      if bestModel == nil or bestModel.perf.validError > error then
         bestModel = {params=TableUtils.shallowCopy(flattened)}
-        bestModel.perf = {validRmse=rmse}
+        bestModel.perf = {validError=error}
       end  
      
     end
@@ -154,8 +171,8 @@ function Learner.hyperGridSearch(opts)
   
   --using selected hyper parameters train model on train and validation data and compute error on test data to get genralization performance
   local seq=buildModelFun(bestModel.params,learner)
-  learner:learn(seq,dataSetup.trainAndValidationData[{{},{1,dataSetup.trainAndValidationData:size(2)-1}}],dataSetup.trainAndValidationData[{{},dataSetup.trainAndValidationData:size(2)}])
-  bestModel.perf.testRmse = learner:rmse(seq,dataSetup.testData[{{},{1,dataSetup.testData:size(2)-1}}],dataSetup.testData[{{},dataSetup.testData:size(2)}])  
+  learner:learn(seq,dataSetup.trainAndValidationInputData[{{},{}}],dataSetup.trainAndValidationTargetData[{{},{}}])
+  bestModel.perf.testError = learner:error(seq,dataSetup.testInputData[{{},{}}],dataSetup.testTargetData[{{},{}}])  
   return bestModel
 end
 

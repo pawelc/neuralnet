@@ -19,4 +19,10 @@ function MatrixLayer.checkSize(size)
   end
 end
 
+--Set error function
+function MatrixLayer:errFun(errFun)
+  self.errFun = errFun
+  return self
+end
+
 return MatrixLayer

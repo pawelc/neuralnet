@@ -26,8 +26,6 @@ end
 
 --Hidden layer computes its preactivation which is tranfered through activation function which produces output sent to the next layer
 function MatrixHiddenLayer:forward()
-  --copy input into extended vector
-  self.input:narrow(1,1,self.prev.size):copy(self.prev.output)
   self.preactivation = self.weights*self.input
   self.output = self.actFun.fun(self.preactivation)
 end

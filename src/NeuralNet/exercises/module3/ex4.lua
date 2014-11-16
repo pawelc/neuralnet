@@ -64,7 +64,7 @@ local function main()
                                sep="%s"} 
   
   --split data for cross validation and test data
-  local dataSetup = data.setupTrainValidationTestData(ndp,10)
+  local dataSetup = data.setupTrainValidationTestData(ndp[{{},{1,2}}],ndp[{{},{3}}],10)
    
   --look for the best model using grid search over hyper parameters
   local bestModel = Learner.hyperGridSearch{

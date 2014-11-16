@@ -1,6 +1,7 @@
 --Layer containing Hebbian neuron
 
 local MatrixLayer=require("NeuralNet.layer.MatrixLayer")
+local TorchUtils=require("NeuralNet.utils.TorchUtils")
 local t=require("torch")
 
 --Hidden MatrixLayer class
@@ -15,18 +16,20 @@ function MatrixHebbianLayer:initialise()
     error("Hebbian layer at level ".. self.level .." has to have input layer")
   end
   self.weights=self.weightGenFun(self.size,self.prev.size)
+  self.input=torch.Tensor(self.prev.size):zero()
 end
 
 --Hidden layer computes its preactivation which is tranfered through activation function which produces output sent to the next layer
 function MatrixHebbianLayer:forward()
-  self.input = self.prev.output
   self.output = self.weights*self.input
 end
 
 --adjusting weights
 function MatrixHebbianLayer:adjustWeights(epoch)   
-    self.deltaWeights = torch.Tensor(self.output:size(1), self.input:size(1)):zero():addr(self.output,self.input);
-    self.weights = self.weights + self.deltaWeights 
+    self.deltaWeights = torch.Tensor(self.output:size(1), self.input:size(1)):zero():addr(self.output,self.input) * self.learner.learningRateFun()
+    self.weights = self.weights + self.deltaWeights
+    --normalize weights
+    self.weights = torch.div(self.weights,math.sqrt(torch.dot(self.weights,self.weights))) 
 end
 
 --Set weight generator

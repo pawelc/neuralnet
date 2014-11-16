@@ -26,11 +26,14 @@ function MatrixOutputLayer:initialise()
 end
 
 --Output layer computes its preactivation which is tranfered through activation function which produces output
-function MatrixOutputLayer:forward()
-  self.input:narrow(1,1,self.prev.size):copy(self.prev.output)
+function MatrixOutputLayer:forward()  
   self.preactivation = self.weights*self.input
-  self.output = self.actFun.fun(self.preactivation)
+  self.output = self.actFun.fun(self.preactivation) 
   self.error = self.errFun(self.expected,self.output)
+  if self.error:dim()==2 then
+    --to get 1D vector out of nx1 Tensor
+    self.error = self.error:select(1,1)
+  end
 end
 
 --Perform backward pass through the output layer
@@ -49,12 +52,6 @@ end
 --Set activation function
 function MatrixOutputLayer:actFun(actFun)
   self.actFun = actFun
-  return self
-end
-
---Set error function
-function MatrixOutputLayer:errFun(errFun)
-  self.errFun = errFun
   return self
 end
 
