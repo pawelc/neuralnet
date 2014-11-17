@@ -13,6 +13,35 @@ function AdjustParamsFunctions.createHebbianAdjustParamsFun(normalizeWeights,lea
   end
 end
 
+function AdjustParamsFunctions.createSejnowskiCovarianceRuleAdjustParamsFun(learningRate)
+  local currentEpoch = 0
+  return function(layer,epoch)
+    if epoch ~= currentEpoch then
+      currentEpoch = epoch
+      layer.inputRunningSum=torch.Tensor(layer.input:size(1)):zero()
+      layer.outputRunningSum=torch.Tensor(layer.output:size(1)):zero()
+      layer.examplesProcessed=0  
+    end
+    layer.inputRunningSum = layer.inputRunningSum + layer.input
+    layer.outputRunningSum = layer.outputRunningSum + layer.output
+    layer.examplesProcessed=layer.examplesProcessed+1
+    
+    layer.inputMean=torch.div(layer.inputRunningSum,layer.examplesProcessed)
+    layer.outputMean=torch.div(layer.outputRunningSum,layer.examplesProcessed)
+  
+    layer.deltaWeights = torch.Tensor(layer.output:size(1), layer.input:size(1)):zero():addr(layer.output-layer.outputMean,layer.input-layer.inputMean)*learningRate
+    layer.weights = layer.weights + layer.deltaWeights
+  end
+end
+
+function AdjustParamsFunctions.createOjaAdjustParamsFun(learningRate)
+  local currentEpoch = 0
+  return function(layer,epoch)
+    layer.deltaWeights = torch.Tensor(layer.output:size(1), layer.input:size(1)):zero():addr(layer.output,layer.input-layer.weights*layer.output:select(1,1))*learningRate
+    layer.weights = layer.weights + layer.deltaWeights
+  end
+end
+
 --adjusting weights
 function AdjustParamsFunctions.createHiddenLayerBackPropAdjustParamsFun(params)
   local momentum = params.momentum

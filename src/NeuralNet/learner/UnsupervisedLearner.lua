@@ -9,11 +9,6 @@ function UnsupervisedLearner:new(params)
   return UnsupervisedLearner:__new(params)
 end
 
-function UnsupervisedLearner:setNormalizeWeights(normalize)
-  self.normalizeWeights = normalize 
-  return self
-end
-
 --learn the sequence of layers using simple hebbian update rule
 function UnsupervisedLearner:learn(seq,inputSignal)  
   seq:learner(self)  
@@ -27,7 +22,7 @@ function UnsupervisedLearner:learn(seq,inputSignal)
       seq:forwardSig(input)
       seq:forwardFun(function(layer)
         if layer.adjustParamsFun then
-          layer:adjustParamsFun(layer, e)
+          layer.adjustParamsFun(layer, e)
         end
       end
       )
