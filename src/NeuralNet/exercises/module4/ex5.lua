@@ -1,5 +1,6 @@
---Exercise 4. Implement Oja's rule to perform 3-class clustering of the stan-
---dard Iris Flower input data. Attach comparative analysis of the results.
+--Exercise 5. Implement competitive network with three nodes to perform 3-
+--class clustering of the standard Iris Flower input data. Attach comparative
+--analysis of the results.
 
 --setup project location
 projectLocation = "/Users/pawelc/git/neuralnet"
@@ -19,6 +20,8 @@ require "logging"
 local weighGen = require 'NeuralNet.WeightGen'
 local Error = require 'NeuralNet.Error'
 local TableUtils = require 'NeuralNet.utils.TableUtils'
+local LuaUtils = require 'NeuralNet.utils.LuaUtils'
+local TorchUtils = require 'NeuralNet.utils.TorchUtils'
 
 ----------------------------------------------------------------------
 -- parse command-line options
@@ -26,7 +29,7 @@ local TableUtils = require 'NeuralNet.utils.TableUtils'
 local opt = lapp[[
    -i,--normalize_input                 should the input be normalized
    -e,--epochs            (default 100)   number of epochs
-   -l,--learning_rate     (default 0.01) learning rate
+   -l,--learning_rate     (default 0.1) learning rate
 ]]
 
 logger = logging.new(function(self, level, message)
@@ -45,10 +48,10 @@ local function buildModel()
   local seq=sequence:new()
   --add layer with 4 inputs as the dimension of the input of the iris data set
   seq:addLayer(input.new(4))
-  --output is the hebbian layer with the same number of neurons 
-  seq:addLayer(MatrixAggregateLayer.new(1):                  
-                  weightGenFun(weighGen.uniformAroundZero):
-                  setAdjustParamsFun(AdjustParamsFunctions.createOjaAdjustParamsFun(opt.learning_rate))
+  --3 output neurons
+  seq:addLayer(MatrixAggregateLayer.new(3):                  
+                  weightGenFun(LuaUtils.chainExc({weighGen.uniformAroundZero,weighGen.normalise})):
+                  setAdjustParamsFun(AdjustParamsFunctions.createCompetitiveLearningFun(opt.learning_rate))
                   )                 
   
   --initialize neural net             
@@ -84,7 +87,7 @@ local function main()
   local learner = UnsupervisedLearner:new{nEpochs=opt.epochs}:learn(model,inputData)
   
   for i = 1,iris:size(1) do
-    print(model:forwardSig(inputData[{i,{}}]):select(1,1)..","..iris[i][5])
+    print(string.format("%s,%s",TorchUtils.argmax(model:forwardSig(inputData[{i,{}}])),iris[i][5]))
   end    
              
 end

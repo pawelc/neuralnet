@@ -1,6 +1,7 @@
 local AdjustParamsFunctions={}
 
 require 'torch'
+local TorchUtils = require 'NeuralNet.utils.TorchUtils'
 
 function AdjustParamsFunctions.createHebbianAdjustParamsFun(normalizeWeights,learningRate)
   return function(layer,epoch)
@@ -35,10 +36,23 @@ function AdjustParamsFunctions.createSejnowskiCovarianceRuleAdjustParamsFun(lear
 end
 
 function AdjustParamsFunctions.createOjaAdjustParamsFun(learningRate)
-  local currentEpoch = 0
   return function(layer,epoch)
     layer.deltaWeights = torch.Tensor(layer.output:size(1), layer.input:size(1)):zero():addr(layer.output,layer.input-layer.weights*layer.output:select(1,1))*learningRate
     layer.weights = layer.weights + layer.deltaWeights
+    --normalize weights
+    layer.weights = torch.div(layer.weights,math.sqrt(torch.dot(layer.weights,layer.weights)))
+  end
+end
+
+function AdjustParamsFunctions.createCompetitiveLearningFun(learningRate)
+  return function(layer,epoch)
+    local maxNeuronIdx = TorchUtils.argmax(layer.output)
+    local weights = layer.weights[{{maxNeuronIdx},{}}]
+    --update weights of the winning neuron
+    weights = weights+(layer.input-weights)*learningRate
+    --normalize
+    weights = torch.div(weights,math.sqrt(torch.dot(weights,weights)))
+    layer.weights[{{maxNeuronIdx},{}}] = weights
   end
 end
 
