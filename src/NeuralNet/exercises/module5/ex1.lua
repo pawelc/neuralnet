@@ -1,5 +1,5 @@
---Exercise 4. Implement Oja's rule to perform 3-class clustering of the stan-
---dard Iris Flower input data. Attach comparative analysis of the results.
+--Exercise 1. Implement the two-inputs SOM with 1D output lattice and test
+--it on a square grid with random samples.
 
 --setup project location
 require 'paths'
@@ -26,8 +26,9 @@ local TableUtils = require 'NeuralNet.utils.TableUtils'
 --
 local opt = lapp[[
    -i,--normalize_input                 should the input be normalized
-   -e,--epochs            (default 100)   number of epochs
-   -l,--learning_rate     (default 0.01) learning rate
+   -w,--normalize_weights               should the weights be normalized after each weight update
+   -e,--epochs            (default 1)   number of epochs
+   -l,--learning_rate     (default 0.1) learning rate
 ]]
 
 logger = logging.new(function(self, level, message)
@@ -49,7 +50,7 @@ local function buildModel()
   --output is the hebbian layer with the same number of neurons 
   seq:addLayer(MatrixAggregateLayer.new(1):                  
                   weightGenFun(weighGen.uniformAroundZero):
-                  setAdjustParamsFun(AdjustParamsFunctions.createOjaAdjustParamsFun(opt.learning_rate))
+                  setAdjustParamsFun(AdjustParamsFunctions.createHebbianAdjustParamsFun(opt.normalize_weights,opt.learning_rate))
                   )                 
   
   --initialize neural net             
@@ -60,28 +61,17 @@ end
   
 local function main()         
   --read iris data when plant names are translated into numerical values                           
-  local iris = Data.fileToTensor{file=projectLocation.."/src/NeuralNet/exercises/module4/iris.data.txt",
-                               nColumns=5,
-                               sep=",",
-                               mapping={[5]=function(el) 
-                                  if el == "Iris-setosa" then return 1                                   
-                                  elseif el == "Iris-versicolor" then return 2
-                                  elseif el == "Iris-virginica" then return 3
-                                end  
-                               end}
-                              }
+  local data = Data.stdinToTensor{nColumns=2,sep=","}
+                              
   if opt.normalize_input then
-    Data.normaliseData(iris,{1,2,3,4})                                  
+    Data.normaliseData(data,{1,2})                                  
   end   
-  
-  --input data is only first 4 columns
-  local inputData = iris[{{},{1,4}}] 
  
   local model = buildModel()
-  local learner = UnsupervisedLearner:new{nEpochs=opt.epochs}:learn(model,inputData)
+  local learner = UnsupervisedLearner:new{nEpochs=opt.epochs}:learn(model,data)
   
-  for i = 1,iris:size(1) do
-    print(model:forwardSig(inputData[{i,{}}]):select(1,1)..","..iris[i][5])
+  for i = 1,data:size(1) do
+    print(model:forwardSig(data[{i,{}}]):select(1,1))
   end    
              
 end

@@ -1,4 +1,7 @@
-a={"a","b","c","d"}
-print(a)
-print(a[1])
-print(a[{2,3}])
+
+
+local lines = {}
+-- read the lines in table 'lines'
+for line in io.lines() do
+  print(line)
+end

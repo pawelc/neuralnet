@@ -2,9 +2,10 @@
 --the standard Iris Flower input data. Compare results with the Exercise 1.
 
 --setup project location
-projectLocation = "/Users/pawelc/git/neuralnet"
+require 'paths'
+local projectLocation = paths.dirname(paths.thisfile()).."/../../../../"
 --setup path so lua can find required modules
-package.path=package.path..";/Users/pawelc/git/neuralnet/src/?.lua"
+package.path=package.path..";"..projectLocation.."/src/?.lua"
 
 require 'pl'
 local t = require 'torch'
@@ -69,13 +70,9 @@ local function main()
                                 end  
                                end}
                               }
-  if opt.normalize_input then                              
-    --normalizing input data                              
-    for i = 1,4 do
-      iris[{{},i}]:add(-iris[{{},i}]:mean())
-      iris[{{},i}]:div(iris[{{},i}]:std())
-    end
-  end   
+  if opt.normalize_input then
+    Data.normaliseData(iris,{1,2,3,4})                                  
+  end 
   
   --input data is only first 4 columns
   local inputData = iris[{{},{1,4}}] 

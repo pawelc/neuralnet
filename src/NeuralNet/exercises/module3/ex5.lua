@@ -1,8 +1,9 @@
 --Trains neural net for the NDP data
 
 --setup project location
-projectLocation = "/Users/pawelc/git/neuralnet"
-
+require 'paths'
+local projectLocation = paths.dirname(paths.thisfile()).."/../../../../"
+--setup path so lua can find required modules
 package.path=package.path..";"..projectLocation.."/src/?.lua"
 
 --import all required dependencies

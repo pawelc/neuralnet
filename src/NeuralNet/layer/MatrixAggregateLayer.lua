@@ -1,4 +1,4 @@
---Layer containing Hebbian neuron
+--Layer containing neurons which compute output as dot product of its weight and input
 
 local MatrixLayer=require("NeuralNet.layer.MatrixLayer")
 local TorchUtils=require("NeuralNet.utils.TorchUtils")

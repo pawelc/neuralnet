@@ -1,6 +1,10 @@
 --Trains neural net for the XOR prblem
 
-package.path=package.path..";/Users/pawelc/git/neuralnet/src/?.lua"
+--setup project location
+require 'paths'
+local projectLocation = paths.dirname(paths.thisfile()).."/../../../../"
+--setup path so lua can find required modules
+package.path=package.path..";"..projectLocation.."/src/?.lua"
 
 local sequence = require 'NeuralNet.Sequence'
 local input = require 'NeuralNet.layer.MatrixInputLayer'
@@ -63,7 +67,7 @@ local function main()
   })
   
   --stop after n epochs
-  local nEpochs=1000
+  local nEpochs=100000
   logger:info(string.format("Running learner %d epochs",nEpochs))
   
   local learner = StopAfterNEpochsBackPropLearner:new{
