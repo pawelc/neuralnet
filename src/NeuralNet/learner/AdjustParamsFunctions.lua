@@ -14,6 +14,56 @@ function AdjustParamsFunctions.createHebbianAdjustParamsFun(normalizeWeights,lea
   end
 end
 
+function AdjustParamsFunctions.createSOMAdjustParamsFun(params)
+  local learningRateFun=params.learningRateFun
+  local initSigma=params.initSigma
+  local timeDecay=params.timeDecay
+  local tnFun=params.tnFun
+  
+  local function normaliseWeights(layer)
+    for x = 1,layer.weights:size(1) do
+      for y = 1,layer.weights:size(2) do
+        layer.weights[x][y]=torch.div(layer.weights[x][y], math.sqrt(torch.dot(layer.weights[x][y],layer.weights[x][y])))         
+      end
+    end
+  end
+  
+  return function(layer,epoch)    
+    --compute lateral distance from each neuron to winning neuron for each configuration of the winning neuron, cache it so can be resued
+    if layer.distanceTensor == nil then
+      layer.distanceTensors = torch.Tensor(layer.weights:size(1),layer.weights:size(2),layer.weights:size(1),layer.weights:size(2))
+      for x = 1,layer.weights:size(1) do
+        for y = 1,layer.weights:size(2) do
+          --x,y winning neuron          
+          for i = 1,layer.weights:size(1) do
+            for j = 1,layer.weights:size(2) do
+              layer.distanceTensors[x][y][i][j]=(x-i)*(x-i)+(y-j)*(y-j)  
+            end
+          end  
+        end
+      end
+    end
+    --compute topological neighberhood
+    local sigma = initSigma * math.exp(-epoch/timeDecay)
+    local tn =  tnFun(sigma, layer.distanceTensors[layer.minIdx[1]][layer.minIdx[2]])
+    
+    if layer.deltaWeights == nil then
+--      normaliseWeights(layer)
+      layer.deltaWeights=torch.Tensor(layer.weights:size())
+    end
+    
+    --compute weight update for each neuron
+    for x = 1,layer.weights:size(1) do
+      for y = 1,layer.weights:size(2) do
+        layer.deltaWeights[x][y]=(layer.input-layer.weights[x][y])*tn[x][y]*learningRateFun(epoch)               
+      end
+    end
+  
+    layer.weights = layer.weights + layer.deltaWeights
+--    normaliseWeights(layer)
+  end
+end
+
 function AdjustParamsFunctions.createSejnowskiCovarianceRuleAdjustParamsFun(learningRate)
   local currentEpoch = 0
   return function(layer,epoch)

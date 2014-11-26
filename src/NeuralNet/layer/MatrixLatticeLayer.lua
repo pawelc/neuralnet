@@ -7,20 +7,35 @@ local t=require("torch")
 --Hidden MatrixLayer class
 local MatrixLatticeLayer = MatrixLayer:__new()
 
-function MatrixLatticeLayer.new(dims)
-  return MatrixLatticeLayer:__new{dims=dims}
+function MatrixLatticeLayer.new(params)
+  return MatrixLatticeLayer:__new{params=params}
 end
 
 function MatrixLatticeLayer:initialise()
   if(self.prev == nil) then
     error("MatrixLatticeLayer layer at level ".. self.level .." has to have input layer")
   end
-  self.weights=self.weightGenFun(self.dimensions,self.prev.size)
-  self.input=torch.Tensor(self.prev.size):zero()
+  local weightDims = self.params.dims
+--  self.output=torch.Tensor(weightDims)
+  weightDims:resize(self.params.dims:size(1)+1,0) 
+  weightDims[weightDims:size(1)]=self.prev.size
+  self.weights=self.weightGenFun(weightDims)
+  self.input=torch.Tensor(self.prev.size):zero()  
 end
 
 function MatrixLatticeLayer:forward()
-  self.output = self.weights*self.input
+--  self.maxOutput = nil
+  self.minDistance = nil  
+  for x = 1,self.weights:size(1) do
+    for y = 1,self.weights:size(2) do
+      local diff = self.input - self.weights[{x,y,{}}]
+      local distance = diff * diff   
+      if self.minDistance == nil or self.minDistance > distance then
+        self.minDistance = distance
+        self.minIdx = torch.LongStorage({x,y})
+      end  
+    end
+  end
 end
 
 --Set weight generator

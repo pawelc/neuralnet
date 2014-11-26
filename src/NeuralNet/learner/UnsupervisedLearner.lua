@@ -14,7 +14,8 @@ function UnsupervisedLearner:learn(seq,inputSignal)
   seq:learner(self)  
   local dataSize=inputSignal:size(1)
   for e = 1,self.nEpochs do
-    local rowPermutation = torch.randperm(dataSize)
+    local rowPermutation = torch.LongTensor() 
+    torch.randperm(rowPermutation,dataSize)
     for i = 1,dataSize do
       self.epoch = e
       local row=rowPermutation[i]

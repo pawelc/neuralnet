@@ -1,8 +1,8 @@
 local t=require("torch")
 local WeightGen={}
 
-function WeightGen.uniformAroundZero(outSize,inSize)
-  return (t.rand(outSize,inSize) * 2 - 1) * 1
+function WeightGen.uniformAroundZero(...)
+  return (t.rand(...) * 0.2 - 0.1) * 1
 end
 
 function WeightGen.normalise(tensor2d)

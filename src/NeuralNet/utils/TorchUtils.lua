@@ -41,4 +41,48 @@ function TorchUtils.argmax(tensor)
    end
 end
 
+--Returns tensor as string of comma delimited elements in the row and rows separated by new line
+function TorchUtils.tensorToCsv(tensor)
+   local nDimension = tensor:nDimension()
+   local lines={}
+   if nDimension == 2 then
+      for i = 1,tensor:size(1) do
+        lines[#lines+1]=TorchUtils.vecToCsv(tensor[{i,{}}])  
+      end
+   else
+      error(string.format('tensor has %d dimensions, not 2', nDimension))
+   end
+   return table.concat(lines,"\n")
+end
+
+--Returns 2D lattice as CSV where first two columns are localtions of neurons
+function TorchUtils.twoDimLatticeToCsv(tensor)
+   local nDimension = tensor:nDimension()
+   local lines={}
+   if nDimension == 3 then
+      for x = 1,tensor:size(1) do
+        for y = 1,tensor:size(2) do 
+          lines[#lines+1]=x..","..y..","..TorchUtils.vecToCsv(tensor[x][y])
+        end  
+      end
+   else
+      error(string.format('tensor has %d dimensions, not 2', nDimension))
+   end
+   return table.concat(lines,"\n")
+end
+
+--Returns vector as string of comma delimited elements
+function TorchUtils.vecToCsv(vec)
+   local nDimension = vec:nDimension()
+   local elements={}
+   if nDimension == 1 then
+      for i = 1,vec:size(1) do
+        elements[#elements+1]=vec[i] 
+      end
+   else
+      error('vector has %d dimensions, not 1', nDimension)
+   end
+   return table.concat(elements,",")
+end
+
 return TorchUtils

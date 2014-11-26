@@ -30,4 +30,9 @@ function MatrixLayer:setAdjustParamsFun(adjustParamsFun)
   return self
 end
 
+function MatrixLayer:param(name,value)
+  self[name]=value
+  return self
+end
+
 return MatrixLayer

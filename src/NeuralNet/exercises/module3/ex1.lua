@@ -26,6 +26,7 @@ logger = logging.new(function(self, level, message)
 logger:setLevel (logging.INFO)
 
 local function main()
+  timer = torch.Timer()
   --setting seed so the experiment can be repeted
   t.manualSeed(123)
 
@@ -87,7 +88,7 @@ local function main()
   
   logger:info(string.format("Weights in the first hidden layer:\n%s",seq.layers[2].weights))
   logger:info(string.format("Weights in the output layer:\n%s",seq.layers[3].weights))
-  
+  print('Took: ' .. timer:time().real .. ' seconds')
 end
 
 main()

@@ -6,11 +6,11 @@ local Learner = require 'NeuralNet.learner.Learner'
 
 local Data={}
 
---read data from the file and returns Tensor
--- file - file to read from
--- nColumns - number of column in the file
--- sep - separator
--- mapping which defines how to mul n-th column of non numeric data into numeric one
+---Read data from the file and returns Tensor. All parameters are passed in one table.
+-- @param file file to read from
+-- @param nColumns number of column in the file
+-- @param sep separator
+-- @param mapping which defines how to mul n-th column of non numeric data into numeric one
 function Data.fileToTensor(params)
   local file = params.file
   params.lines=io.lines(file)
